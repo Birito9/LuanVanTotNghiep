@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>startup_window</class>
+ <widget class="QMainWindow" name="startup_window">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1280</width>
+    <height>800</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1280</width>
+    <height>800</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>PHẦN MỀM TƯ VẤN GIÁO DỤC</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QLabel" name="Logo">
+    <property name="geometry">
+     <rect>
+      <x>430</x>
+      <y>50</y>
+      <width>411</width>
+      <height>221</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap>img/Logo.png</pixmap>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="background">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>1280</width>
+      <height>1024</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>1280</width>
+      <height>1024</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>1280</width>
+      <height>1024</height>
+     </size>
+    </property>
+    <property name="autoFillBackground">
+     <bool>true</bool>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap>img/background.jpg</pixmap>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="background_fillter">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>1280</width>
+      <height>1024</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>1280</width>
+      <height>1024</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>1280</width>
+      <height>1024</height>
+     </size>
+    </property>
+    <property name="sizeIncrement">
+     <size>
+      <width>0</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="baseSize">
+     <size>
+      <width>0</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+	background: rgb(8, 78, 142,60%);
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="admissions_consultancy">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>440</y>
+      <width>201</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Tahoma</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="tabletTracking">
+     <bool>false</bool>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton{
+	color: rgb(255, 255, 255);
+	font: 75 10pt &quot;Tahoma&quot;;
+	border-radius: 20px;
+	background-color: rgba(74,167,72,95%);
+	font-weight: bold;
+}
+QPushButton:hover{
+	font: 75 12pt &quot;Tahoma&quot;;
+	border-radius: 20px;
+	border: 7px solid #4AA748;
+	background-color: rgba(132,193,65,65%);
+	font-weight: bold;
+}</string>
+    </property>
+    <property name="text">
+     <string>Tư Vấn Giáo Vụ</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="tittle_app">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>310</y>
+      <width>711</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="font">
+     <font>
+      <family>Tahoma</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="tabletTracking">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton{
+	color: rgb(255, 255, 255);
+	font: 75 16pt &quot;Tahoma&quot;;
+	border-radius: 20px;
+	font-weight: bold;
+}
+QPushButton:hover{
+	font: 75 20pt &quot;Tahoma&quot;;
+	border-radius: 20px;
+	font-weight: bold;
+}</string>
+    </property>
+    <property name="text">
+     <string>Đại học Công Nghệ Sài Gòn</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="password_input">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>670</y>
+      <width>281</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLineEdit{
+	font: 75 12pt &quot;Tahoma&quot;;
+	border-radius: 10px;
+	background-color: rgba(255, 255, 255,80%);
+	font-weight: bold;
+}
+
+QLineEdit:hover{
+	font: 75 14pt &quot;Tahoma&quot;;
+	border: 2px solid #92D050;
+	background-color: rgba(255, 255, 255,90%);
+	font-weight: bold;
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="echoMode">
+     <enum>QLineEdit::Password</enum>
+    </property>
+    <property name="placeholderText">
+     <string>Mật Khẩu</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="username_input">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>600</y>
+      <width>431</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLineEdit{
+	font: 75 12pt &quot;Tahoma&quot;;
+	border-radius: 10px;
+	background-color: rgba(255, 255, 255,80%);
+	font-weight: bold;
+}
+
+QLineEdit:hover{
+	font: 75 14pt &quot;Tahoma&quot;;
+	border: 2px solid #92D050;
+	background-color: rgba(255, 255, 255,90%);
+	font-weight: bold;
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="echoMode">
+     <enum>QLineEdit::Normal</enum>
+    </property>
+    <property name="placeholderText">
+     <string>Tài Khoản</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="title_formadmin">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>520</y>
+      <width>361</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font: 75 16pt &quot;Arial&quot;;
+color: rgb(255, 255, 255);
+font-weight: bold;
+text-align: center;
+vertical-align: middle;</string>
+    </property>
+    <property name="text">
+     <string>Đăng nhập quản trị viên</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="loggin_admin">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>670</y>
+      <width>131</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton{
+	color: rgb(255, 255, 255);
+	font: 75 10pt &quot;Tahoma&quot;;
+	border-radius: 10px;
+	background-color: rgba(74,167,72,95%);
+	font-weight: bold;
+}
+QPushButton:hover{
+	font: 75 12pt &quot;Tahoma&quot;;
+	border-radius: 10px;
+	border: 3px solid #4AA748;
+	background-color: rgba(132,193,65,65%);
+	font-weight: bold;
+}</string>
+    </property>
+    <property name="text">
+     <string>Đăng Nhập</string>
+    </property>
+    <property name="autoRepeatDelay">
+     <number>300</number>
+    </property>
+    <property name="autoDefault">
+     <bool>true</bool>
+    </property>
+    <property name="flat">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="admin_form">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>520</y>
+      <width>531</width>
+      <height>221</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>false</bool>
+    </property>
+    <property name="tabletTracking">
+     <bool>false</bool>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="accessibleName">
+     <string/>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+	gridline-color: rgb(32, 47, 255);
+	background-color: rgb(8, 78, 142,90%);
+	border-radius: 20px;
+}
+</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+    <property name="textInteractionFlags">
+     <set>Qt::LinksAccessibleByMouse</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="note">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>750</y>
+      <width>461</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font: 75 14pt &quot;Arial&quot;;
+color: rgb(255, 255, 255);</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <zorder>background</zorder>
+   <zorder>background_fillter</zorder>
+   <zorder>admin_form</zorder>
+   <zorder>Logo</zorder>
+   <zorder>admissions_consultancy</zorder>
+   <zorder>tittle_app</zorder>
+   <zorder>title_formadmin</zorder>
+   <zorder>username_input</zorder>
+   <zorder>password_input</zorder>
+   <zorder>loggin_admin</zorder>
+   <zorder>note</zorder>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
