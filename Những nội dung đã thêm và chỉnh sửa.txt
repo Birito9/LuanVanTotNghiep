@@ -3,3 +3,5 @@
 2. App đã có thể sử dụng khi không có internet
 
 3. Lý do vì sao sử dụng thiết kế bảng cơ sở dữ liệu trang 29 Word
+
+4. xử lý thời gian trên câu trả lời ví dụ trả lời có năm 2022 thì sẽ đưa ra câu trả lời "liên hệ khoa" những câu trả lời không liên quan đến thời gian sẽ bình thường
