@@ -1,0 +1,5 @@
+1. Sử dụng kết hợp 3 phương pháp Fulltext Search MySQL, Phương pháp tính tỉ lệ từ khóa trùng khớp câu hỏi người dùng, sắp xếp danh sách các tỷ lệ khớp từ khóa
+
+2. App đã có thể sử dụng khi không có internet
+
+3. Lý do vì sao sử dụng thiết kế bảng cơ sở dữ liệu trang 29 Word

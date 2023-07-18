@@ -8,7 +8,7 @@ a = Analysis(
     ['tuvangiaoduc.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('database.py', '.'), ('library.py', '.'), ('utils.py', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

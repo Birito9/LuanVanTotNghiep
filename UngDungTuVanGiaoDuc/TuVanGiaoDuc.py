@@ -1,78 +1,18 @@
-'''
-các gói cài đặt thư viện cài đặt:
-pip install wheel
-pip install pipwin
-pipwin refresh
-pipwin install pyaudio
-pip install pyttsx3
-pip install speechrecognition
-Pip install PyQt5designer
-Pip install PyQt5 tools
-Pip install PyQt5
-pip install pyinstaller
-pip install mysql-connector-python
-pip install gTTS
-
-# Kết nối giao diện
-pyuic5 -x [tên file của qt].ui -o [tên file của python].py
-pyuic5 window6_createadmin.ui -o window6_createadmin.py
-pyuic5 window5_infouser.ui -o window5_infouser.py
-pyuic5 window4_datatable.ui -o window4_datatable.py
-pyuic5 window3_choosetable.ui -o window3_choosetable.py
-pyuic5 window2_admissions.ui -o window2_admissions.py
-pyuic5 window1_startup.ui -o window1_startup.py
-# Nén thành ứng dụng
-pyinstaller --onefile --windowed --icon=logo.ico tuvangiaoduc.py
-'''
-
-import glob #xóa file save mp3
-import random #lấy số ngẫu nhiên
-import uuid #Tạo giá trị ngẫu nhiên cho id
-import speech_recognition as lis #lấy giọng nói
-from gtts import gTTS #lấy giọng nói của chị google
-import mysql.connector #kết nối với mysql
-import sys #thư viện hệ thống
-import os #thư viện tương tác với hệ điều hành
-from openpyxl import Workbook #xuất file excel
-import re #thư viện xử lý chuỗi
-import shutil #module trong Python cung cấp hàm sao chép, di chuyển, đổi tên, xóa và thao tác với các tệp tin và thư mục.
-import requests
-#thư viện của qtdesigner
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QUrl, QTimer, QCoreApplication
-from PyQt5.QtMultimedia import QMediaPlayer,QMediaContent
-
-#kết nối file qt
-from window1_startup import Ui_startup_window
-from window2_admissions import Ui_admissions_window
-from window3_choosetable import Ui_choosetable_window
-from window4_datatable import Ui_datatable_window
-from window5_infouser import Ui_userinfo_window
-from window6_createadmin import Ui_createadmin_window
+from library import *
+from database import Database
+from utils import Utils
 
 class Mainwindow():
     # *******************window1*********************
-    def check_network_connection(self):
-        try:
-            requests.get('https://www.google.com')
-            return True
-        except requests.ConnectionError:
-            return False
-
     # khởi chạy chương trình
     def __init__(self):
-        if not self.check_network_connection():
-            # Hiển thị thông báo lỗi mất kết nối mạng
-            error_message = "Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại!"
-            self.showDialog(error_message)
         self.window_startupwin = QMainWindow()
         self.uic_startupwin = Ui_startup_window()
         self.uic_startupwin.setupUi(self.window_startupwin)
         self.uic_startupwin.admissions_consultancy.clicked.connect(self.show_admissionswindow)
         self.uic_startupwin.loggin_admin.clicked.connect(self.show_choosetablewindow)
-        self.is_greeted = False
-
+        self.is_greeted_voice = False
+        self.is_greeted_text = False
 
     # load form đăng nhập
     def show_startupwindow(self):
@@ -83,7 +23,7 @@ class Mainwindow():
     # load form tư vấn Giáo dục
     def show_admissionswindow(self):
         bot_process = "Chào mừng bạn đến với tư vấn Giáo dục của trường Đại Học Công Nghệ Sài Gòn"
-        self.speakoutput(bot_process)
+        utils.speakoutput(bot_process)
         self.window_startupwin.close()
         self.window_admissionswindow = QtWidgets.QMainWindow()
         self.uic_admissionswindow= Ui_admissions_window()
@@ -102,47 +42,37 @@ class Mainwindow():
         sdt = self.uic_admissionswindow.numberphone_input.text()
         checksdt = len(self.uic_admissionswindow.numberphone_input.text())
         self.timestop()
-        if tensv == "":
-            bot_process = "Bạn vui lòng nhập họ và tên"
-            self.speakoutput(bot_process)
-            self.uic_admissionswindow.bot_output.setText(bot_process)
-        elif not tensv.replace(' ', '').isalpha():
-            bot_process = "Bạn vui lòng nhập họ và tên chính xác"
-            self.speakoutput(bot_process)
-            self.uic_admissionswindow.bot_output.setText(bot_process)
-        elif sdt != "" and (not sdt.isalnum() or checksdt != 10 or not sdt.startswith('0')):
-            bot_process = "Bạn vui lòng nhập số điện thoại chính xác 10 số"
-            self.speakoutput(bot_process)
-            self.uic_admissionswindow.bot_output.setText(bot_process)
-        else:
-            self.uic_admissionswindow.name_input.setDisabled(True)
-            self.uic_admissionswindow.numberphone_input.setDisabled(True)
-            if self.uic_admissionswindow.question_input.text().isspace() or self.uic_admissionswindow.question_input.text() == "":
-                bot_process = "Bạn chưa nhập câu hỏi"
-                self.speakoutput(bot_process)
-                self.uic_admissionswindow.bot_output.setText(bot_process)
-            else:
-                if not self.is_greeted:
-                    bot_process = f"Xin chào {tensv}. Chúng tôi đang tìm kiếm câu trả lời"
-                    self.is_greeted = True
-                    self.speakoutput(bot_process)
-                    self.uic_admissionswindow.bot_output.setText(bot_process)
-                    QCoreApplication.processEvents()  # Cập nhật giao diện
 
-                    # Tạm dừng để cho câu chào hiển thị trên giao diện
-                    QTimer.singleShot(5000, self.continue_execution)
-                else:
-                    self.continue_execution()
+        if not self.validate_personal_info(tensv, sdt, checksdt):
+            return
+
+        self.disable_personal_info_fields()
+
+        if not self.validate_question_input():
+            return
+
+        if not self.is_greeted_text:
+            self.greet_user_text(tensv)
+            QTimer.singleShot(5000, self.continue_execution)
+        else:
+            self.continue_execution()
 
     def continue_execution(self):
-        bot_process = self.get_response(self.uic_admissionswindow.question_input.text())
-        self.speakoutput(bot_process)
+        user_question_text = self.uic_admissionswindow.question_input.text()
+        bot_process = self.get_response(user_question_text)
+        utils.speakoutput(bot_process)
         self.uic_admissionswindow.bot_output.setText(bot_process)
+
+        # Lấy thông tin cá nhân
         ten = self.uic_admissionswindow.name_input.text()
         sdt = self.uic_admissionswindow.numberphone_input.text()
         cauhoi = self.uic_admissionswindow.question_input.text()
         cautl = self.uic_admissionswindow.bot_output.toPlainText()
+
+        # Lưu thông tin vào cơ sở dữ liệu
         self.adddb_userinfowindow(ten, sdt, cauhoi, cautl)
+
+        # Cập nhật giao diện
         self.uic_admissionswindow.user_ouput.setText(self.uic_admissionswindow.question_input.text())
         self.loaddatahintquestion()
         self.timestart()
@@ -154,58 +84,88 @@ class Mainwindow():
         checksdt = len(sdt)
         self.timestop()
 
-        if tensv == "":
-            bot_process = "Bạn vui lòng nhập họ và tên"
-            self.speakoutput(bot_process)
-        elif not tensv.replace(' ', '').isalpha():
-            bot_process = "Bạn vui lòng nhập họ và tên chính xác"
-            self.speakoutput(bot_process)
-        elif sdt and (not sdt.isnumeric() or checksdt != 10 or not sdt.startswith('0')):
-            bot_process = "Bạn vui lòng nhập số điện thoại chính xác 10 số"
-            self.speakoutput(bot_process)
-        else:
-            self.uic_admissionswindow.name_input.setEnabled(False)
-            self.uic_admissionswindow.numberphone_input.setEnabled(False)
-            if not self.is_greeted:
-                bot_process = f"Xin chào {tensv}. Tôi đang nghe. Bạn cần hỏi gì?"
-                self.is_greeted = True
-                self.speakoutput(bot_process)
-                self.uic_admissionswindow.bot_output.setText(bot_process)
-                QCoreApplication.processEvents()  # Cập nhật giao diện
+        if not self.validate_personal_info(tensv, sdt, checksdt):
+            return
 
-                # Tạm dừng để cho câu chào hiển thị trên giao diện
-                QTimer.singleShot(5000, lambda: self.handle_audio_question(tensv, sdt))
-            else:
-                self.uic_admissionswindow.bot_output.setText("Trợ lý đang nghe")
-                self.speakoutput("Trợ lý đang nghe")
-                QTimer.singleShot(5000, lambda: self.handle_audio_question(tensv, sdt))
+        self.disable_personal_info_fields()
+
+        if not self.is_greeted_voice:
+            self.greet_user_voice(tensv)
+            QTimer.singleShot(3200, lambda: self.handle_audio_question(tensv, sdt))
+        else:
+            self.uic_admissionswindow.bot_output.setText("Trợ lý đang nghe")
+            utils.speakoutput("Trợ lý đang nghe")
+            QTimer.singleShot(2000, lambda: self.handle_audio_question(tensv, sdt))
 
     def handle_audio_question(self, tensv, sdt):
+        # Ghi âm giọng nói
         with lis.Microphone() as mic:
             bot_listen = lis.Recognizer()
             audio = bot_listen.listen(mic, phrase_time_limit=5)
 
         try:
-            text = bot_listen.recognize_google(audio, language="vi-VN")  # Nhận diện giọng nói thành văn bản
-            self.cauhoi = text
-            self.uic_admissionswindow.user_ouput.setText(text)
-            bot_process = self.get_response(text)
-            self.speakoutput(bot_process)
+            # Chuyển đổi giọng nói thành văn bản
+            user_question_voice = bot_listen.recognize_google(audio, language="vi-VN")
+            self.cauhoi = user_question_voice
+            self.uic_admissionswindow.user_ouput.setText(user_question_voice)
+
+            # Lấy phản hồi từ hàm get_response
+            bot_process = self.get_response(user_question_voice)
+            utils.speakoutput(bot_process)
             self.uic_admissionswindow.bot_output.setText(bot_process)
 
-            ten = tensv
-            cauhoi = text
-            cautl = bot_process
-            self.adddb_userinfowindow(ten, sdt, cauhoi, cautl)
+            # Lưu thông tin vào cơ sở dữ liệu
+            self.adddb_userinfowindow(tensv, sdt, user_question_voice, bot_process)
             self.loaddatahintquestion()
             self.timestart()
         except lis.UnknownValueError:
             self.uic_admissionswindow.bot_output.setText(
                 "Hệ thống chưa nhận diện được giọng nói của bạn. Vui lòng thử lại!")
-            self.speakoutput("Hệ thống chưa nhận diện được giọng nói của bạn. Vui lòng thử lại")
+            utils.speakoutput("Hệ thống chưa nhận diện được giọng nói của bạn. Vui lòng thử lại")
         except lis.RequestError:
             error_message = "Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại!"
-            self.showDialog(error_message)
+            utils.showDialog(error_message)
+
+    def validate_personal_info(self, tensv, sdt, checksdt):
+        if tensv == "":
+            bot_process = "Bạn vui lòng nhập họ và tên"
+            utils.speakoutput(bot_process)
+            return False
+        elif not tensv.replace(' ', '').isalpha():
+            bot_process = "Bạn vui lòng nhập họ và tên chính xác không có kí tự đặc biệt"
+            utils.speakoutput(bot_process)
+            return False
+        elif sdt and (not sdt.isnumeric() or checksdt != 10 or not sdt.startswith('0')):
+            bot_process = "Bạn vui lòng nhập số điện thoại chính xác 10 số và số 0 ở đầu"
+            utils.speakoutput(bot_process)
+            return False
+        return True
+
+    def disable_personal_info_fields(self):
+        self.uic_admissionswindow.name_input.setEnabled(False)
+        self.uic_admissionswindow.numberphone_input.setEnabled(False)
+
+    def validate_question_input(self):
+        if self.uic_admissionswindow.question_input.text().isspace() or self.uic_admissionswindow.question_input.text() == "":
+            bot_process = "Bạn chưa nhập câu hỏi"
+            utils.speakoutput(bot_process)
+            self.uic_admissionswindow.bot_output.setText(bot_process)
+            return False
+        return True
+
+    def greet_user_text(self, tensv):
+        bot_process = f"Xin chào {tensv}. Chúng tôi đang tìm kiếm câu trả lời"
+        self.is_greeted_text = True
+        utils.speakoutput(bot_process)
+        self.uic_admissionswindow.bot_output.setText(bot_process)
+        QCoreApplication.processEvents()
+
+    def greet_user_voice(self, tensv):
+        bot_process = f"Xin chào {tensv}. Bạn cần hỏi gì?"
+        self.is_greeted_voice = True
+        utils.speakoutput(bot_process)
+        self.uic_admissionswindow.bot_output.setText(bot_process)
+        QCoreApplication.processEvents()
 
     # nút quay lại của win 2
     def btn_logout_admissionswindow(self):
@@ -235,35 +195,17 @@ class Mainwindow():
         self.timestart()
         self.timer.stop()
 
-    # lọc tên bảng cơ sở dữ liệu của admissionswindow
-    def cb_tablename_admissionswindow(self):
-        if self.uic_admissionswindow.choosetable_box.currentText() == 'Tư vấn chung':
-            text = 'CauHoiTuVan'
-            return text
-        elif self.uic_admissionswindow.choosetable_box.currentText() == 'Du lịch':
-            text = 'CauHoiDuLich'
-            return text
-        elif self.uic_admissionswindow.choosetable_box.currentText() == 'Công nghệ thông tin':
-            text = 'CauHoiCongNgheThongTin'
-            return text
-        elif self.uic_datatablewindow.choosetable_box.currentText() == 'Quản Trị Kinh Doanh':
-            text = 'CauHoiQuanTriKinhDoanh'
-            return text
-        else:
-            text = 'CauHoiTuVan'
-            return text
-
     # tải câu hỏi gợi ý
     def loaddatahintquestion(self):
         self.uic_admissionswindow.hintquestion.setColumnWidth(0, 380)
         self.uic_admissionswindow.hintquestion.setHorizontalHeaderLabels(["Câu Hỏi Gợi Ý"])
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             cur = con.cursor()
             cur.execute("   select distinct cauhoi, cautraloi from ThongTinNguoiDung\
                             where cauhoi not like 'Hệ thống chưa nhận diện được giọng nói của bạn xin hãy thử lại!'\
-                            having cautraloi != 'Vấn đề này không có trong phạm vi của tôi, Bạn hãy liên hệ trực tiếp cán bộ phòng, khoa để được hỗ trợ thêm' ORDER BY cauhoi, cautraloi;")
+                            having cautraloi != 'Vấn đề này không có trong phạm vi của tôi. Bạn hãy liên hệ trực tiếp cán bộ phòng, khoa để được hỗ trợ thêm.' ORDER BY cauhoi, cautraloi;")
             data = cur.fetchall()
             self.uic_admissionswindow.hintquestion.setRowCount(len(data))
             self.uic_admissionswindow.hintquestion.setColumnCount(1)
@@ -274,28 +216,31 @@ class Mainwindow():
         except:
             return con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
-    # chọn câu trả lời trong admissionswindow
-    def selectdb_admissionswindow(self):
-        con = self.condb()  # Kết nối tới cơ sở dữ liệu
+    # lọc tên bảng cơ sở dữ liệu của admissionswindow
+    def cb_tablename_admissionswindow(self):
+        table_mapping = {
+            'Tư vấn chung': 'CauHoiTuVan',
+            'Du lịch': 'CauHoiDuLich',
+            'Công nghệ thông tin': 'CauHoiCongNgheThongTin',
+            'Quản Trị Kinh Doanh': 'CauHoiQuanTriKinhDoanh'
+        }
+        current_text = self.uic_admissionswindow.choosetable_box.currentText()
+        table = table_mapping.get(current_text, 'CauHoiTuVan')
+        return table
+
+    def selectdb_admissionswindow(self, question):
+        con = db.condb()  # Kết nối tới cơ sở dữ liệu
         table = self.cb_tablename_admissionswindow()  # Lấy tên bảng từ combobox
         print('Đã kết nối thành công')
-        # Truy vấn SQL để lấy câu hỏi và câu trả lời từ bảng cauhoi và traloi, sắp xếp theo thời gian cập nhật giảm dần và lấy kết quả cập nhật lần cuối
-        # If - else tới chết
-        try:
-            if table == 'CauHoiTuVan':
-                query = "SELECT cauhoituvan.macauhoi, cauhoituvan.cauhoi, traloituvan.cautraloi FROM CauHoiTuVan INNER JOIN TraLoiTuVan ON cauhoituvan.macauhoi = traloituvan.macauhoi ORDER BY traloituvan.thoigiancapnhat DESC;"
-            elif table == 'CauHoiDuLich':
-                query = "SELECT cauhoidulich.macauhoi, cauhoidulich.cauhoi, traloidulich.cautraloi FROM cauhoidulich INNER JOIN traloidulich ON cauhoidulich.macauhoi = traloidulich.macauhoi ORDER BY traloidulich.thoigiancapnhat DESC;"
-            elif table == 'CauHoiCongNgheThongTin':
-                query = "SELECT cauhoicongnghethongtin.macauhoi, cauhoicongnghethongtin.cauhoi, traloicongnghethongtin.cautraloi FROM cauhoicongnghethongtin INNER JOIN traloicongnghethongtin ON cauhoicongnghethongtin.macauhoi = traloicongnghethongtin.macauhoi ORDER BY traloicongnghethongtin.thoigiancapnhat DESC;"
-            elif table == 'CauHoiQuanTriKinhDoanh':
-                query = "SELECT cauhoiquantrikinhdoanh.macauhoi, cauhoiquantrikinhdoanh.cauhoi, traloiquantrikinhdoanh.cautraloi FROM cauhoiquantrikinhdoanh INNER JOIN traloiquantrikinhdoanh ON cauhoiquantrikinhdoanh.macauhoi = traloiquantrikinhdoanh.macauhoi ORDER BY traloiquantrikinhdoanh.thoigiancapnhat DESC;"
-            else:
-                query = "SELECT cauhoituvan.macauhoi, cauhoituvan.cauhoi, traloituvan.cautraloi FROM CauHoiTuVan INNER JOIN TraLoiTuVan ON cauhoituvan.macauhoi = traloituvan.macauhoi ORDER BY traloituvan.thoigiancapnhat DESC;"
 
+        traloi_table = f"TraLoi{table[6:]}"  # Tách từ kí tự thứ 6 của table để lấy traloi_table
+        search_query = f"'{question}'"  # Lấy nội dung tìm kiếm từ tham số question
+
+        try:
+            query = f"SELECT ch.macauhoi, ch.cauhoi, tl.cautraloi FROM {table} ch INNER JOIN {traloi_table} tl ON ch.macauhoi = tl.macauhoi WHERE MATCH(ch.cauhoi) AGAINST ({search_query});"
             cur = con.cursor()  # Tạo đối tượng con trỏ để thực hiện truy vấn SQL
             cur.execute(query)  # Thực thi truy vấn
             data = cur.fetchall()  # Lấy tất cả các hàng kết quả của truy vấn
@@ -303,54 +248,112 @@ class Mainwindow():
         except:
             return con.rollback()  # Rollback nếu có lỗi xảy ra
         finally:
-            self.discondb()  # Đóng kết nối tới cơ sở dữ liệu
+            db.discondb()  # Đóng kết nối tới cơ sở dữ liệu
             print('Đã ngắt kết nối')
 
-    def message_probability(self, user_message, recognised_words, single_response=False, ):
-        message_certainty = 0
+    def calculate_keyword_match(self, user_question_input, database_question):
+        # Chuyển đổi câu hỏi người dùng và câu hỏi trong cơ sở dữ liệu thành chuỗi lowercase
+        user_question = user_question_input.lower()
+        db_question = database_question.lower()
 
-        # Đếm số từ có trong mỗi tin nhắn được xác định trước
-        for word in user_message:
-            if word in recognised_words:
-                message_certainty += 1
+        # Tách từ trong câu hỏi người dùng và câu hỏi trong cơ sở dữ liệu
+        user_keywords = set(user_question.split())
+        db_keywords = set(db_question.split())
 
-        # Tính toán phần trăm các từ được nhận dạng trong một tin nhắn của người dùng
-        percentage = float(message_certainty) / float(len(recognised_words))
+        # Tính toán tỷ lệ khớp bằng cách tính số từ khóa chung giữa hai câu hỏi và chia cho số từ trong câu hỏi trong cơ sở dữ liệu
+        keyword_match_ratio = len(user_keywords.intersection(db_keywords)) / len(db_keywords)
 
-        # Phải là single_response
-        if single_response:
-            return int(percentage * 100)
+        return keyword_match_ratio
+
+    def calculate_keyword_match_ratio_list(self, user_question, data):
+        keyword_match_ratios = []
+        for row in data:
+            macauhoi = row[0]
+            cauhoi = row[1]
+            cautraloi = row[2]
+
+            # Tính toán keyword_match_ratio cho mỗi cặp cauhoi và cautraloi
+            keyword_match_ratio = self.calculate_keyword_match(user_question, cauhoi)
+
+            # Thêm vào danh sách keyword_match_ratios
+            keyword_match_ratios.append((macauhoi, cauhoi, cautraloi, keyword_match_ratio))
+
+        return keyword_match_ratios
+
+    def get_response(self, user_question_input):
+        # Chuyển đổi câu hỏi người dùng thành chữ thường
+        user_question = user_question_input.lower()
+
+        data = self.selectdb_admissionswindow(user_question)
+
+        # Kiểm tra xem câu hỏi nguyên thủy có chứa cặp từ khóa về thời gian hay không
+        if self.contains_time_keywords(user_question):
+            # Tính toán danh sách keyword_match_ratios
+            keyword_match_ratios = self.calculate_keyword_match_ratio_list(user_question, data)
+
+            # Sắp xếp danh sách keyword_match_ratios theo giảm dần của keyword_match_ratio
+            sorted_ratios = sorted(keyword_match_ratios, key=lambda x: x[3], reverse=True)
+
+            # Lấy câu trả lời từ cặp có tỷ lệ khớp từ khóa cao nhất
+            if sorted_ratios:
+                best_match = sorted_ratios[0]
+                response = best_match[2]
+                current_year = datetime.datetime.now().year
+
+                # Xác định năm từ câu trả lời
+                year_in_response = None
+                words = response.split()
+                for i in range(len(words)):
+                    if words[i].isdigit():
+                        year_in_response = int(words[i])
+                        break
+
+                # So sánh năm trong câu trả lời với năm hiện tại
+                if year_in_response is not None and year_in_response < current_year:
+                    response = "Vấn đề này không có trong phạm vi của tôi. Bạn hãy liên hệ trực tiếp cán bộ phòng, khoa để được hỗ trợ thêm."
+
+                return response
         else:
-            return 0
+            # Tính toán danh sách keyword_match_ratios
+            keyword_match_ratios = self.calculate_keyword_match_ratio_list(user_question, data)
 
-    def check_all_messages(self, message):
-        highest_prob_list = {}
+            # Sắp xếp danh sách keyword_match_ratios theo giảm dần của keyword_match_ratio
+            sorted_ratios = sorted(keyword_match_ratios, key=lambda x: x[3], reverse=True)
 
-        # Đơn giản hóa việc tạo phản hồi / thêm nó vào dict
-        def response(bot_response, list_of_words, single_response=False):
-            nonlocal highest_prob_list
-            highest_prob_list[bot_response] = self.message_probability(message, list_of_words, single_response)
+            # Lấy câu trả lời từ cặp có tỷ lệ khớp từ khóa cao nhất
+            if sorted_ratios:
+                best_match = sorted_ratios[0]
+                response = best_match[2]
 
-        # lấy câu trả lời
-        data = self.selectdb_admissionswindow()  # Lấy câu hỏi và câu trả lời từ cơ sở dữ liệu
-        response('Vấn đề này không có trong phạm vi của tôi, Bạn hãy liên hệ trực tiếp cán bộ phòng, khoa để được hỗ trợ thêm', [''],
-                 single_response=True)  # Tạo phản hồi mặc định nếu không có câu trả lời phù hợp
-        for x in data:
-            response(x[2], re.split(r'\s+|[,;?!.-]\s*', x[1]), single_response=True)
-            # Tạo phản hồi cho mỗi câu hỏi trong cơ sở dữ liệu bằng cách so khớp từng từ với tin nhắn của người dùng
+                return response
 
-        best_match = max(highest_prob_list, key=highest_prob_list.get)  # Tìm phản hồi có xác suất cao nhất
-        return best_match
+        # Trả về câu response "liên hệ khoa" nếu không có kết quả khớp từ khóa hoặc không chứa cặp từ khóa về thời gian
+        return "Vấn đề này không có trong phạm vi của tôi. Bạn hãy liên hệ trực tiếp cán bộ phòng, khoa để được hỗ trợ thêm."
 
-    # lấy câu trả lời
-    def get_response(self, user_input):
-        split_message = re.split(r'\s+|[,;?!.-]\s*', user_input.lower())  # Tách tin nhắn thành các từ
-        response = self.check_all_messages(split_message)  # Kiểm tra và lấy phản hồi phù hợp
-        return response
+    def contains_time_keywords(self, question):
+        time_keywords = ["năm", "tháng", "ngày", "tuần", "quý", "học kỳ", "kỳ học", "mùa hè", "mùa đông", "thời hạn",
+                         "lịch trình", "thời điểm", "thời vụ", "thời hạn", "thời gian", "học kỳ", "học kỳ",
+                         "kỳ nghỉ", "kỳ thi"]
+
+        time_phrases = ["lịch học kỳ", "thời gian nghỉ", "ngày học", "thời gian thi", "học kỳ 1", "học kỳ 2",
+                        "học kỳ mùa hè", "học kỳ mùa đông", "kỳ học phụ", "kỳ nghỉ giữa học kỳ", "kỳ thi", "kỳ báo cáo",
+                        "kỳ đánh giá", "lịch học kỳ"]
+
+        # Kiểm tra xem các từ khóa đơn có xuất hiện trong câu hỏi nguyên thủy hay không
+        for keyword in time_keywords:
+            if keyword in question:
+                return True
+
+        # Kiểm tra xem các cụm từ khóa có xuất hiện trong câu hỏi nguyên thủy hay không
+        for phrase in time_phrases:
+            if phrase in question:
+                return True
+
+        return False
 
     # thêm ttsv vào dbbase trong admissionswindow
     def adddb_userinfowindow(self, ten, sdt, cauhoi, cautrl):
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             query = "insert into ThongTinNguoiDung (hovaten, sdt, cauhoi, cautraloi) values ('" + ten + "', '" + sdt + "', '" + cauhoi + "', '" + cautrl + "');"
@@ -360,7 +363,7 @@ class Mainwindow():
         except:
             con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # *******************window3*********************
@@ -372,7 +375,7 @@ class Mainwindow():
         matkhau = self.uic_startupwin.password_input.text()
 
         # Khởi tạo các biến
-        con = self.condb()
+        con = db.condb()
 
         # Hàm để thiết lập giao diện cho từng vai trò
         def set_ui_for_role(role, admin_id_taikhoan):
@@ -422,7 +425,7 @@ class Mainwindow():
         except:
             self.uic_startupwin.note.setText("Lỗi khi truy vấn cơ sở dữ liệu")
         finally:
-            self.discondb()
+            db.discondb()
             print('Đã ngắt kết nối')
 
     # window3
@@ -434,7 +437,7 @@ class Mainwindow():
     def btn_upddbpass_admin(self):
         taikhoan = self.uic_choosetablewindow.account_input.text()
         matkhau = self.uic_choosetablewindow.password_input.text()
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             query = "update taikhoan set matkhau = '"+matkhau+"' where taikhoan = '"+taikhoan+"';"
@@ -444,9 +447,9 @@ class Mainwindow():
         except:
             con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
-            self.showDialog('cập nhật mật khẩu thành công')
+            utils.showDialog('cập nhật mật khẩu thành công')
 
     # *******************window4*********************
 
@@ -478,17 +481,15 @@ class Mainwindow():
 
     # Lọc tên bảng cơ sở dữ liệu của datatablewindow
     def cb_tablename_datatablewindow(self):
-        if self.uic_datatablewindow.choosetable_box.currentText() == 'Tư vấn chung':
-            choosetable = 'CauHoiTuVan'
-            self.loaddb_admissions(choosetable)
-        elif self.uic_datatablewindow.choosetable_box.currentText() == 'Du lịch':
-            choosetable = 'CauHoiDuLich'
-        elif self.uic_datatablewindow.choosetable_box.currentText() == 'Công nghệ thông tin':
-            choosetable = 'CauHoiCongNgheThongTin'
-        elif self.uic_datatablewindow.choosetable_box.currentText() == 'Quản Trị Kinh Doanh':
-            choosetable = 'CauHoiQuanTriKinhDoanh'
-
-        self.loaddb_admissions(choosetable)  # Tải dữ liệu khi chọn mục trong combobox
+        table_mapping = {
+            'Tư vấn chung': 'CauHoiTuVan',
+            'Du lịch': 'CauHoiDuLich',
+            'Công nghệ thông tin': 'CauHoiCongNgheThongTin',
+            'Quản Trị Kinh Doanh': 'CauHoiQuanTriKinhDoanh'
+        }
+        current_text = self.uic_datatablewindow.choosetable_box.currentText()
+        choosetable = table_mapping.get(current_text, 'CauHoiTuVan')
+        self.loaddb_admissions(choosetable)
         return choosetable
 
     # Load data datatablewindow
@@ -500,13 +501,13 @@ class Mainwindow():
         self.uic_datatablewindow.datatable.setHorizontalHeaderLabels(
             ["Mã Câu Hỏi", "Câu Hỏi", "Câu Trả Lời", "Thời Gian"])
 
-        con = self.condb()
+        con = db.condb()
         print('Đã kết nối thành công')
 
         try:
             traloi_table = f"TraLoi{choosetable[6:]}"
             query = f"""
-                SELECT ch.macauhoi, ch.cauhoi, tl.cautraloi, ch.thoigiancapnhat FROM  {choosetable}  ch LEFT JOIN {traloi_table} tl ON ch.macauhoi = tl.macauhoi ORDER BY ch.thoigiancapnhat DESC
+                SELECT ch.macauhoi, ch.cauhoi, tl.cautraloi, ch.thoigiancapnhat FROM  {choosetable}  ch LEFT JOIN {traloi_table} tl ON ch.macauhoi = tl.macauhoi ORDER BY ch.thoigiancapnhat desc, CAST(SUBSTRING(ch.macauhoi, 3) AS UNSIGNED) ASC
                 """
             cur = con.cursor()
             cur.execute(query)
@@ -522,7 +523,7 @@ class Mainwindow():
         except:
             return con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('Đã ngắt kết nối')
 
     # window4
@@ -544,21 +545,29 @@ class Mainwindow():
             cautl = self.uic_datatablewindow.answer_input.text()
             admin_id = self.admin_id  # Lấy admin_id từ biến instance
 
-            if cautl == "":
-                self.showDialog('Bạn cần nhập câu trả lời')
+            if not all(c.isalnum() or c.isspace() or c == '.' or c == '?' or c == ',' for c in cauhoi):
+                utils.showDialog('Câu hỏi chỉ được chứa chữ cái, chữ số, dấu cách, dấu chấm, dấu chấm hỏi và dấu phẩy')
+                return
+
+            if cauhoi.strip() == "":
+                utils.showDialog('Bạn cần nhập câu hỏi')
+                return
+
+            if cautl.strip() == "":
+                utils.showDialog('Bạn cần nhập câu trả lời')
                 return
 
             self.adddb_admissionwindows(macauhoi, cauhoi, cautl, admin_id, choosetable)
             self.loaddb_admissions(choosetable)
         except:
-            self.showDialog('Lỗi! Thêm dữ liệu thất bại')
+            utils.showDialog('Lỗi! Thêm dữ liệu thất bại')
         finally:
             self.uic_datatablewindow.idkeyword_input.setText("")
             self.uic_datatablewindow.question_input.setText("")
             self.uic_datatablewindow.answer_input.setText("")
 
     def adddb_admissionwindows(self, macauhoi, cauhoi, cautl, admin_id, table=''):
-        con = self.condb()
+        con = db.condb()
         print('Đã kết nối thành công')
         try:
             # Thêm câu hỏi vào bảng tương ứng
@@ -571,12 +580,12 @@ class Mainwindow():
             query2 = f"INSERT INTO {traloi_table} (macauhoi, cautraloi) VALUES ('{macauhoi}', '{cautl}');"
             cur.execute(query2)
             con.commit()
-            self.showDialog('Thêm dữ liệu thành công')
+            utils.showDialog('Thêm dữ liệu thành công')
         except:
             con.rollback()
-            self.showDialog('Lỗi! Thêm dữ liệu thất bại')
+            utils.showDialog('Lỗi! Thêm dữ liệu thất bại')
         finally:
-            self.discondb()
+            db.discondb()
             print('Đã ngắt kết nối')
 
     def btn_add_ctl(self):
@@ -589,12 +598,11 @@ class Mainwindow():
             if self.uic_datatablewindow.answer_input.text() == "":
                 self.uic_datatablewindow.idkeyword_input.setText(macauhoi)
                 self.uic_datatablewindow.question_input.setText(cauhoi)
+                utils.showDialog('Bạn hãy nhập câu trả lời')
+                return
             else:
                 choosetable = self.cb_tablename_datatablewindow()
                 cautl = self.uic_datatablewindow.answer_input.text()
-                if cautl == "":
-                    self.showDialog('Bạn cần nhập câu trả lời')
-                    return
                 self.adddb_answer_addmission(macauhoi, cauhoi, cautl, choosetable)
                 self.loaddb_admissions(choosetable)
 
@@ -603,10 +611,10 @@ class Mainwindow():
             # Chọn dòng tương ứng với câu hỏi được chọn
             self.uic_datatablewindow.datatable.selectRow(selected_row)
         else:
-            self.showDialog('Lỗi! Chưa chọn dữ liệu')
+            utils.showDialog('Lỗi! Chưa chọn dữ liệu')
 
     def adddb_answer_addmission(self, macauhoi, cauhoi, cautl, table=''):
-        con = self.condb()
+        con = db.condb()
         print('Đã kết nối thành công')
         try:
             # Kiểm tra mã câu hỏi đã tồn tại hay chưa
@@ -616,7 +624,7 @@ class Mainwindow():
             result = cur.fetchone()
 
             if result is None:
-                self.showDialog(f'Mã câu hỏi "{macauhoi}" không tồn tại')
+                utils.showDialog(f'Mã câu hỏi "{macauhoi}" không tồn tại')
                 return
 
             # Thêm câu trả lời vào bảng tương ứng
@@ -624,12 +632,12 @@ class Mainwindow():
             query = f"INSERT INTO {traloi_table} (macauhoi, cautraloi) VALUES ('{macauhoi}', '{cautl}');"
             cur.execute(query)
             con.commit()
-            self.showDialog('Thêm câu trả lời thành công')
+            utils.showDialog('Thêm câu trả lời thành công')
         except:
             con.rollback()
-            self.showDialog('Lỗi! Thêm câu trả lời thất bại')
+            utils.showDialog('Lỗi! Thêm câu trả lời thất bại')
         finally:
-            self.discondb()
+            db.discondb()
             print('Đã ngắt kết nối')
 
     # nút sửa data trên giao diện
@@ -648,7 +656,7 @@ class Mainwindow():
                 self.uic_datatablewindow.answer_input.setText(
                     self.uic_datatablewindow.datatable.item(currentItem.row(), 2).text())
             except:
-                self.showDialog('Lỗi! Chưa chọn dữ liệu')
+                utils.showDialog('Lỗi! Chưa chọn dữ liệu')
         else:
             choosetable = self.cb_tablename_datatablewindow()  # Lấy tên bảng được chọn từ combobox
 
@@ -656,17 +664,28 @@ class Mainwindow():
                 macauhoi = self.uic_datatablewindow.idkeyword_input.text()
                 cauhoi = self.uic_datatablewindow.question_input.text()
                 cautl = self.uic_datatablewindow.answer_input.text()
+                if not all(c.isalnum() or c.isspace() or c == '.' or c == '?' or c == ',' for c in cauhoi):
+                    utils.showDialog(
+                        'Câu hỏi chỉ được chứa chữ cái, chữ số, dấu cách, dấu chấm, dấu chấm hỏi và dấu phẩy')
+                    return
+                if cauhoi.strip() == "":
+                    utils.showDialog('Bạn cần nhập câu hỏi')
+                    return
+
+                if cautl.strip() == "":
+                    utils.showDialog('Bạn cần nhập câu trả lời')
+                    return
                 admin_id = self.admin_id  # Sử dụng admin_id đã có sẵn từ hàm show_choosetablewindow
                 self.upddatedb_admissionswindow(macauhoi, cauhoi, cautl, choosetable,
                                                 admin_id)  # Thực hiện cập nhật dữ liệu
                 success = self.upddatedb_admissionswindow(macauhoi, cauhoi, cautl, choosetable,
                                                           admin_id)  # Thực hiện cập nhật dữ liệu
                 if success:
-                    self.showDialog('Cập nhật thành công!')
+                    utils.showDialog('Cập nhật thành công!')
                 else:
-                    self.showDialog('Lỗi! Cập nhật không thành công')
+                    utils.showDialog('Lỗi! Cập nhật không thành công')
             except:
-                self.showDialog('Lỗi! Cập nhật không thành công')
+                utils.showDialog('Lỗi! Cập nhật không thành công')
             finally:
                 self.loaddb_admissions(choosetable)  # Tải lại dữ liệu trong bảng
                 self.uic_datatablewindow.idkeyword_input.setDisabled(False)
@@ -676,7 +695,7 @@ class Mainwindow():
 
     # Chức năng update dữ liệu admissionswindow
     def upddatedb_admissionswindow(self, macauhoi, cauhoi, cautl, table='', admin_id=''):
-        con = self.condb()
+        con = db.condb()
         print('Đã kết nối thành công')
         try:
             cur = con.cursor()
@@ -701,7 +720,7 @@ class Mainwindow():
             con.rollback()
             return False
         finally:
-            self.discondb()
+            db.discondb()
             print('Đã ngắt kết nối')
 
     # chức năng hỏi trước khi xóa trong win 4
@@ -724,13 +743,13 @@ class Mainwindow():
             macauhoi = self.uic_datatablewindow.datatable.item(currentRow, 0).text()
             self.delete_from_tables(macauhoi, choosetable)
             self.loaddb_admissions(choosetable)
-            self.showDialog('Xóa dữ liệu thành công')
+            utils.showDialog('Xóa dữ liệu thành công')
         else:
-            self.showDialog('Lỗi! Chưa chọn dữ liệu')
+            utils.showDialog('Lỗi! Chưa chọn dữ liệu')
 
     # chức năng xóa dữ liệu trong hai bảng
     def delete_from_tables(self, macauhoi, choosetable):
-        con = self.condb()
+        con = db.condb()
         print('Đã kết nối thành công')
         try:
             # Xóa bản ghi trong bảng TraLoiTuVan trước
@@ -747,7 +766,7 @@ class Mainwindow():
         except:
             con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('Đã ngắt kết nối')
 
     # Tìm kiếm dữ liệu từ hai bảng CauHoi và TraLoi và sắp xếp thời gian cập nhật cuối cùng trên đầu
@@ -756,7 +775,7 @@ class Mainwindow():
         self.uic_datatablewindow.datatable.resizeColumnToContents(1)
         self.uic_datatablewindow.datatable.resizeColumnToContents(2)
         self.uic_datatablewindow.datatable.resizeColumnToContents(3)
-        con = self.condb()
+        con = db.condb()
         print('Đã kết nối thành công')
         try:
             # Xây dựng câu truy vấn SELECT
@@ -780,7 +799,7 @@ class Mainwindow():
         except:
             return con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('Đã ngắt kết nối')
 
     # *******************window5*********************
@@ -806,7 +825,7 @@ class Mainwindow():
         self.uic_userinfowindow.datatable.setColumnWidth(2, 220)
         self.uic_userinfowindow.datatable.setColumnWidth(3, 220)
         self.uic_userinfowindow.datatable.setColumnWidth(4, 235)
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             cur = con.cursor()
@@ -820,13 +839,13 @@ class Mainwindow():
         except:
             return con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # nút xuất file exe
     def btn_exportexcel(self):
         columnheader = ["Họ Và Tên", "Số Điện Thoại", "Câu Hỏi", "Câu Trả Lời", "Thời Gian"]
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             cur = con.cursor()
@@ -840,11 +859,11 @@ class Mainwindow():
             savespot = QFileDialog.getSaveFileName(directory='c:/', filter="Excel Files (*.xlsx)")
             print(savespot[0])
             wb.save(savespot[0])
-            self.showDialog('đã xuất dữ liệu thành công')
+            utils.showDialog('đã xuất dữ liệu thành công')
         except:
-            self.showDialog('lỗi! xuất dữ liệu không thành công')
+            utils.showDialog('lỗi! xuất dữ liệu không thành công')
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # nút xóa tất cả ghi bản thông tin sinh viên
@@ -863,15 +882,15 @@ class Mainwindow():
         try:
             self.deletedb_userinfowindow()
             self.clearsavefilemp3()
-            self.showDialog('xóa thành công')
+            utils.showDialog('xóa thành công')
         except:
-            self.showDialog('lỗi! chưa xóa được dữ liệu')
+            utils.showDialog('lỗi! chưa xóa được dữ liệu')
         finally:
             self.loaddata_userinfowindow()
 
     # chức năng xóa bảng trong userinfowindow
     def deletedb_userinfowindow(self):
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             cur = con.cursor()
@@ -880,7 +899,7 @@ class Mainwindow():
         except:
             con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # đăng xuất userinfowindow
@@ -902,7 +921,7 @@ class Mainwindow():
         self.uic_userinfowindow.datatable.setColumnWidth(4, 235)
         self.uic_userinfowindow.datatable.setHorizontalHeaderLabels(
             ["Họ Và Tên", "Số Điện Thoại", "Câu Hỏi", "Câu Trả Lời", "Thời Gian"])
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             cur = con.cursor()
@@ -917,7 +936,7 @@ class Mainwindow():
         except:
             return con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # *******************window 6*********************
@@ -930,6 +949,11 @@ class Mainwindow():
         self.uic_createadminwindow.setupUi(self.window_createadminwindow)
         self.window_createadminwindow.show()
         self.loaddata_accountnadmin()
+        self.uic_createadminwindow.datatable.setColumnWidth(0, 150)
+        self.uic_createadminwindow.datatable.setColumnWidth(1, 450)
+        self.uic_createadminwindow.datatable.setColumnWidth(2, 200)
+        self.uic_createadminwindow.datatable.setColumnWidth(3, 200)
+        self.uic_createadminwindow.datatable.setColumnWidth(4, 150)
         self.uic_createadminwindow.search_input.textChanged.connect(self.searchdata_createadminwindow)
         self.uic_createadminwindow.back_button.clicked.connect(self.btn_back_createadminwindow)
         self.uic_createadminwindow.logout_button.clicked.connect(self.btn_logout_createadminwindow)
@@ -939,12 +963,12 @@ class Mainwindow():
 
     # chức năng tìm kiếm thông tin quản trị viên
     def searchdata_createadminwindow(self, i=''):
-        self.uic_createadminwindow.datatable.setColumnWidth(4, 350)
-        self.uic_createadminwindow.datatable.setColumnWidth(3, 350)
-        self.uic_createadminwindow.datatable.setColumnWidth(2, 350)
-        self.uic_createadminwindow.datatable.setColumnWidth(1, 350)
-        self.uic_createadminwindow.datatable.setColumnWidth(0, 10)
-        con = self.condb()
+        self.uic_createadminwindow.datatable.setColumnWidth(0, 150)
+        self.uic_createadminwindow.datatable.setColumnWidth(1, 450)
+        self.uic_createadminwindow.datatable.setColumnWidth(2, 200)
+        self.uic_createadminwindow.datatable.setColumnWidth(3, 200)
+        self.uic_createadminwindow.datatable.setColumnWidth(4, 150)
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             query = "select id, hovaten, taikhoan, matkhau, vaitro from taikhoan where hovaten LIKE '%" + i + "%' or taikhoan LIKE '%" + i + "%';"
@@ -960,7 +984,7 @@ class Mainwindow():
         except:
             return con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # nút trở về chọn bảng
@@ -979,19 +1003,49 @@ class Mainwindow():
         taikhoan = self.uic_createadminwindow.account_input.text()
         matkhau = self.uic_createadminwindow.password_input.text()
         vaitro = self.uic_createadminwindow.role_input.text()
-        if taikhoan.isalnum() == True and matkhau.isalnum() == True:
-            self.adddb_createadminwindow(hovaten, taikhoan, matkhau, vaitro)
-            self.loaddata_accountnadmin()
-            self.uic_createadminwindow.fullname_input.setText("")
-            self.uic_createadminwindow.account_input.setText("")
-            self.uic_createadminwindow.password_input.setText("")
-            self.uic_createadminwindow.role_input.setText("")
-        else:
-            self.showDialog("tên tài khoản và mật khẩu không hơp lệ")
+
+        if hovaten.strip() == "":
+            utils.showDialog('Bạn cần nhập họ và tên')
+            return
+
+        if vaitro.strip() == "":
+            utils.showDialog('Bạn cần nhập vai trò')
+            return
+
+        if not taikhoan.isalnum():
+            utils.showDialog('Tài khoản chỉ được chứa chữ cái và chữ số')
+            return
+
+        if taikhoan.strip() == "":
+            utils.showDialog('Bạn cần nhập tài khoản')
+            return
+
+        if matkhau.strip() == "":
+            utils.showDialog('Bạn cần nhập mật khẩu')
+            return
+
+        if not all(c.isalpha() or c.isspace() for c in hovaten):
+            utils.showDialog('Họ và tên chỉ được chứa chữ cái và dấu cách')
+            return
+
+        if vaitro.strip() == "":
+            utils.showDialog('Bạn cần nhập vai trò')
+            return
+
+        if vaitro != 'Admin' and vaitro != 'Cán Bộ':
+            utils.showDialog('Vai trò chỉ được sử dụng "Admin" hoặc "Cán Bộ"')
+            return
+
+        self.adddb_createadminwindow(hovaten, taikhoan, matkhau, vaitro)
+        self.loaddata_accountnadmin()
+        self.uic_createadminwindow.fullname_input.setText("")
+        self.uic_createadminwindow.account_input.setText("")
+        self.uic_createadminwindow.password_input.setText("")
+        self.uic_createadminwindow.role_input.setText("")
 
     # chức năng quản trị viên
     def adddb_createadminwindow(self, hovaten, taikhoan, matkhau, vaitro):
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             query = "INSERT INTO taikhoan (id, hovaten, taikhoan, matkhau, vaitro) VALUES (%s, %s, %s, %s, %s);"
@@ -1003,12 +1057,11 @@ class Mainwindow():
         except:
             con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
-            self.showDialog('thêm quản trị viên thành công')
+            utils.showDialog('thêm quản trị viên thành công')
 
         # nút cập nhật thông tin tài khoản quản trị viên
-
     def btn_updateadmin(self):
         currentItem = 0
         for currentItem in self.uic_createadminwindow.datatable.selectedItems():
@@ -1026,22 +1079,49 @@ class Mainwindow():
                 self.uic_createadminwindow.role_input.setText(
                     self.uic_createadminwindow.datatable.item(currentItem.row(), 4).text())
             except:
-                self.showDialog('lỗi! chưa chọn dữ liệu')
+                utils.showDialog('lỗi! chưa chọn dữ liệu')
         else:
             try:
                 id = ""
                 if self.uic_createadminwindow.id_input.text() == "":
-                    self.showDialog('Cảnh báo: không tìm thấy Mã tài khoản để cập nhật')
+                    utils.showDialog('Cảnh báo: không tìm thấy Mã tài khoản để cập nhật')
                 else:
                     id = self.uic_createadminwindow.id_input.text()
                 hoten = self.uic_createadminwindow.fullname_input.text()
                 taikhoan = self.uic_createadminwindow.account_input.text()
                 matkhau = self.uic_createadminwindow.password_input.text()
                 vaitro = self.uic_createadminwindow.role_input.text()
+                if hoten.strip() == "":
+                    utils.showDialog('Bạn cần nhập họ và tên')
+                    return
+
+                if taikhoan.strip() == "":
+                    utils.showDialog('Bạn cần nhập tài khoản')
+                    return
+
+                if not taikhoan.isalnum():
+                    utils.showDialog('Tài khoản chỉ được chứa chữ cái và chữ số')
+                    return
+
+                if matkhau.strip() == "":
+                    utils.showDialog('Bạn cần nhập mật khẩu')
+                    return
+
+                if not all(c.isalpha() or c.isspace() for c in hoten):
+                    utils.showDialog('Họ và tên chỉ được chứa chữ cái và dấu cách')
+                    return
+
+                if vaitro.strip() == "":
+                    utils.showDialog('Bạn cần nhập vai trò')
+                    return
+
+                if vaitro != 'Admin' and vaitro != 'Cán Bộ':
+                    utils.showDialog('Vai trò chỉ được sử dụng "Admin" hoặc "Cán Bộ"')
+                    return
                 self.upddbadmin_createadminwindow(id, hoten, taikhoan, matkhau, vaitro)
-                self.showDialog('cập nhật thành công')
+                utils.showDialog('cập nhật thành công')
             except:
-                self.showDialog('lỗi! tài khoản chưa được cập nhật')
+                utils.showDialog('lỗi! tài khoản chưa được cập nhật')
             finally:
                 self.loaddata_accountnadmin()
                 self.uic_createadminwindow.id_input.setText("")
@@ -1052,7 +1132,7 @@ class Mainwindow():
 
         # chức năng cập nhật thông tin tài khoản quản trị viên
     def upddbadmin_createadminwindow(self, id, hoten, taikhoan, matkhau, vaitro):
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             query = "update taikhoan set hovaten = '"+ hoten +"', taikhoan = '"+ taikhoan +"', matkhau = '"+ matkhau +"', vaitro = '"+ vaitro +"' where id = '"+ id +"';"
@@ -1062,7 +1142,7 @@ class Mainwindow():
         except:
             con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # nút xóa tài khoản quản trị viên
@@ -1083,16 +1163,19 @@ class Mainwindow():
             currentItem.row()
         try:
             id = self.uic_createadminwindow.datatable.item(currentItem.row(), 0).text()
+            if id == self.admin_id:
+                utils.showDialog('Lỗi! Bạn không thể xóa tài khoản đang sử dụng chức năng')
+                return
             self.delselectdb_createadminwindow(id)
             self.loaddata_accountnadmin()
-            self.showDialog('xóa quản trị viên thành công')
+            utils.showDialog('xóa quản trị viên thành công')
         except:
-            self.showDialog('lỗi! chưa chọn quản trị viên')
+            utils.showDialog('lỗi! chưa chọn quản trị viên')
 
 
     # chức năng xóa csdl trên tài khoản quản trị viên
     def delselectdb_createadminwindow(self, id):
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             query = "DELETE FROM taikhoan WHERE id = %s;"
@@ -1102,11 +1185,11 @@ class Mainwindow():
         except:
             con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
 
     # tải dữ liệu tài khoản quản trị viên
-    def loaddata_accountnadmin(self, ):
+    def loaddata_accountnadmin(self):
         self.uic_createadminwindow.datatable.setColumnWidth(4, 70)
         self.uic_createadminwindow.datatable.setColumnWidth(3, 250)
         self.uic_createadminwindow.datatable.setColumnWidth(2, 250)
@@ -1114,7 +1197,7 @@ class Mainwindow():
         self.uic_createadminwindow.datatable.setColumnWidth(0, 150)
         self.uic_createadminwindow.datatable.setHorizontalHeaderLabels(
             ["Mã tài khoản", "Họ và tên", "Tài khoản", "Mật khẩu", "Vai trò"])
-        con = self.condb()
+        con = db.condb()
         print('đã kết nối thành công')
         try:
             query = "select id, hovaten, taikhoan, matkhau, vaitro from taikhoan;"
@@ -1130,67 +1213,61 @@ class Mainwindow():
         except:
             return con.rollback()
         finally:
-            self.discondb()
+            db.discondb()
             print('đã ngắt kết nối')
+# # *******************chức năng chung*********************
+#
+#     # chức năng show thông báo
+#     def showDialog(self, text):
+#         msgBox = QMessageBox()
+#         msgBox.setIcon(QMessageBox.Information)
+#         msgBox.setText(text)
+#         msgBox.setWindowTitle("Thông báo")
+#         msgBox.setStandardButtons(QMessageBox.Ok)
+#         msgBox.exec()
+#
+#     # chức năng chuyển văn bản thành giọng nói
+#     def speakoutput(self, text):
+#         if self.check_network_connection():
+#             unique_filename = str(uuid.uuid4()) + ".mp3"
+#
+#             # Lấy đường dẫn thư mục gốc của ứng dụng
+#             app_path = os.path.dirname(os.path.abspath(__file__))
+#
+#             # Tạo đường dẫn đến file âm thanh tạm trong cùng thư mục với ứng dụng
+#             temp_file_path = os.path.join(app_path, unique_filename)
+#
+#             tts = gTTS(text=text, lang='vi', slow=False)
+#
+#             # Lưu file âm thanh
+#             tts.save(temp_file_path)
+#
+#             self.player = QMediaPlayer()
+#
+#             # Tạo URL từ đường dẫn đến file âm thanh
+#             url = QUrl.fromLocalFile(temp_file_path)
+#
+#             # Tạo nội dung media từ URL
+#             content = QMediaContent(url)
+#
+#             self.player.setMedia(content)
+#             self.player.play()
+#
+#             # Xóa file âm thanh sau khi đã phát xong
+#             self.player.mediaStatusChanged.connect(lambda status: self.delete_temp_file(temp_file_path))
+#
+#     def delete_temp_file(self, file_path):
+#         if os.path.exists(file_path):
+#             os.remove(file_path)\
 
-    # *******************chức năng chung*********************
-    # kết nối csdl
-    def condb(self):
-        try:
-            db = mysql.connector.connect(user='root', password='Tenshi23@2', host='localhost', port='3306',
-                                         database='tuvangiaoduc')
-            return db
-        except mysql.connector.Error as err:
-            self.showDialog(f"Lỗi khi kết nối cơ sở dữ liệu: {err}")
-            return None
+utils = Utils()
 
-    # hủy kết nối csdl
-    def discondb(self):
-        self.condb().close()
-
-    # chức năng show thông báo
-    def showDialog(self, text):
-        msgBox = QMessageBox()
-        msgBox.setIcon(QMessageBox.Information)
-        msgBox.setText(text)
-        msgBox.setWindowTitle("Thông báo")
-        msgBox.setStandardButtons(QMessageBox.Ok)
-        msgBox.exec()
-
-    # chức năng chuyển văn bản thành giọng nói
-    def speakoutput(self, text):
-        r1 = random.randint(1, 10000000)
-        r2 = random.randint(1, 10000000)
-        randfile = str(r2) + "randomtext" + str(r1) + ".mp3"
-        tts = gTTS(text=text, lang='vi', slow=False)
-        tts.save("savefilemp3/" + randfile + "")
-        self.player = QMediaPlayer()
-        fullfile = os.path.join(os.getcwd(), "savefilemp3/" + randfile + "")
-        url = QUrl.fromLocalFile(fullfile)
-        content = QMediaContent(url)
-        self.player.setMedia(content)
-        self.player.play()
-
-        self.clearsavefilemp3_if_threshold_reached()
-
-    def clearsavefilemp3_if_threshold_reached(self):
-        dir = "savefilemp3"
-        filelist = glob.glob(os.path.join(dir, "*"))
-        max_file_count = 30  # Số lượng file tối đa
-        if len(filelist) >= max_file_count:
-            for f in filelist:
-                os.remove(f)
-
-
-    # xóa các bản lưu tư vấn của chương trình
-    def clearsavefilemp3(self):
-        dir = "savefilemp3"
-        filelist = glob.glob(os.path.join(dir, "*"))
-        for f in filelist:
-            os.remove(f)
+db = Database()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     main_win = Mainwindow()
     main_win.show_admissionswindow()
     sys.exit(app.exec())
+
+
