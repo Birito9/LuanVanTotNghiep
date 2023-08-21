@@ -29,9 +29,9 @@ Nếu đã cài đặt Github desktop thì đây là phương án tôi khuyên d
 
 Hãy dùng các lệnh sau để clone rep về:
 ```bash
-$ mkdir QLSV
-$ cd QLSV
-$ git clone https://github.com/Birito9/-STU-LuanVan-TotNghiep-2023-ung-dung-giao-vu-bang-chatbot-.git
+$ mkdir TuVanGiaoDuc
+$ cd TuVanGiaoDuc
+$ git clone https://github.com/Birito9/UngDungTuVanGiaoDuc.git
 ```
 
 ### Tải source code bằng file zip
