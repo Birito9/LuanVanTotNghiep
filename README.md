@@ -19,13 +19,13 @@ Nhiều tính năng mới sẽ được cập nhật thêm sau (Nếu tôi đủ
 
 
 ### Yêu cầu cài đặt
-Pycharm
-MySQL 8.0
-Qt Designer
-Python 3.10
+ Pycharm  
+ MySQL 8.0  
+ Qt Designer  
+ Python 3.10  
 
 ### Hướng dẫn cài đặt
-mình đã viết một file word để hướng dẫn sử dụng.
+Mình đã viết một file word để hướng dẫn sử dụng.
 
 ## Tải Source Code về
 #### Clone the Repository (Phương án khuyên dùng)
