@@ -7,7 +7,7 @@ Luận văn tập trung vào việc nghiên cứu và phát triển một ứng 
 
 ### Chức năng chính
 - Quản lý tài khoản ứng dụng: Quản lý tài khoản của cán bộ phòng ban và các quản trị viên
-- Quản lý dữ liệu tư vấn: 
+- Quản lý dữ liệu tư vấn: Lưu trữ và quản lý dữ liệu tư vấn giữa cán bộ phòng ban và sinh viên, giúp dễ dàng tra cứu và thống kê thông tin.
 - Hỏi đáp tự động: Người dùng có thể đặt câu hỏi về các vấn đề liên quan đến giáo vụ, và chatbot sẽ cung cấp câu trả lời một cách tự động và nhanh chóng.
 - Hỗ trợ giọng nói: Chatbot hỗ trợ tính năng giọng nói để người dùng có thể tương tác bằng cách nói câu hỏi và nghe câu trả lời.
 Nhiều tính năng mới sẽ được cập nhật thêm sau (Nếu tôi đủ trình độ).
