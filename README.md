@@ -39,9 +39,6 @@ $ cd TuVanGiaoDuc
 $ git clone https://github.com/Birito9/UngDungTuVanGiaoDuc.git
 ```
 
-### Tải source code bằng file zip
-Bạn cũng có thể tải về toàn bộ source code của Godchat bằng một [file zip](https://github.com/satthukid000/Project-Godchat/archive/refs/heads/main.zip). Mặc dù cách này đỡ rườm rà hơn, nhưng bạn sẽ phải tự đi mà tải lại để tự đồng bộ với repo của tôi. 
-
 ### Luôn cập nhật bản mới nhất
 Tôi không quan tâm bạn chọn tải source code về bằng kiểu gì, nhưng việc cập nhật phiên bản mới nhất là rất quan trọng, vì trong đó sẽ chứa các tính năng (thậm chí là bugs mới). Nhớ hãy gắn **Sao(*)** cho project này để được thông báo khi tôi update bản mới nhé. 
 
